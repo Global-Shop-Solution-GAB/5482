@@ -1,0 +1,78 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Coded by: MLA
+'Project Start Date: 2/15/2011
+'Hooks:
+'  15930
+'Notes:
+'  Unirac
+
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+F.Intrinsic.Control.CallSub(Load)
+
+Program.Sub.Main.End
+
+Program.Sub.Load.Start
+V.Local.sError.Declare(String)
+V.Local.sSql.Declare(String)
+
+F.Intrinsic.Control.SetErrorHandler("Load_Err")
+F.Intrinsic.Control.ClearErrors
+
+F.Intrinsic.Control.If(V.Passed.009990,=,"")
+	F.Intrinsic.Control.CallSub(Unload)
+F.Intrinsic.Control.Else
+	V.Passed.GAB-LBL-5.Set("")
+	F.Intrinsic.UI.ChangeCallerProperty(Variable.Passed.GAB-LBL-5,"HIDE",1)
+	F.Intrinsic.String.Concat("Select ORDER_NO from ORDER_TO_WO where JOB = '",V.Passed.009990,"' and SUFFIX = '",V.Passed.009991,"'",V.Local.sSql)
+	F.ODBC.Connection!con.OpenRecordsetRO("rst",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,=,True)
+		F.ODBC.con!rst.Close
+		F.Intrinsic.Control.CallSub(Unload)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Concat("Select FLAG_INTL_SHIP from V_ORDER_SHIP_TO where ORDER_NO ='",V.ODBC.con!rst.FieldValTrim!ORDER_NO,"'",V.Local.sSql)
+		F.ODBC.Connection!con.OpenRecordsetRO("rstOrd",V.Local.sSql)
+		F.Intrinsic.Control.If(V.ODBC.con!rstOrd.EOF,=,True)
+			F.ODBC.con!rstOrd.Close
+			F.ODBC.con!rst.Close
+			F.Intrinsic.Control.CallSub(Unload)
+		F.Intrinsic.Control.Else
+			F.Intrinsic.Control.If(V.ODBC.con!rstOrd.FieldValTrim!FLAG_INTL_SHIP,=,"Y")
+				V.Passed.GAB-LBL-5.Set("INTERNATIONAL ORDER")
+				F.Intrinsic.UI.ChangeCallerProperty(Variable.Passed.GAB-LBL-5,"HIDE",0)
+				F.Intrinsic.Variable.SetProperty("GAB-LBL-5","PT",10)
+				F.Intrinsic.Variable.SetProperty("GAB-LBL-5","PL",475)
+				F.Intrinsic.Variable.SetProperty("GAB-LBL-5","FC",255)
+				F.Intrinsic.Variable.SetProperty("GAB-LBL-5","PH",25)
+				F.Intrinsic.Variable.SetProperty("GAB-LBL-5","PW",325)
+				F.Intrinsic.Variable.SetProperty("GAB-LBL-5","FS",15)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+		F.ODBC.con!rstOrd.Close
+		F.ODBC.con!rst.Close
+		F.Intrinsic.Control.CallSub(Unload)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Load_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.Load.End
+
+Program.Sub.Unload.Start
+F.ODBC.Connection!con.Close
+F.Intrinsic.Control.End
+
+Program.Sub.Unload.End
+
+
